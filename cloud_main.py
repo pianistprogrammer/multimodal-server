@@ -1,10 +1,9 @@
 import asyncio
 import json
-import traceback
 import websockets
 import base64
 import torch
-from transformers import AutoModelForSpeechSeq2Seq, LlavaForConditionalGeneration, LlavaProcessor, AutoProcessor, pipeline
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import numpy as np
 import logging
 import sys
@@ -12,13 +11,11 @@ import io
 from PIL import Image
 import time
 import os
-import ollama
+from google import genai
+from google.genai import types
+from kokoro import KPipeline
 
 logger = logging.getLogger(__name__)
-
-from datetime import datetime
-# Import Kokoro TTS library
-from kokoro import KPipeline
 
 # Configure logging
 logging.basicConfig(
@@ -224,8 +221,8 @@ class WhisperTranscriber:
         except Exception as e:
             logger.error(f"Transcription error: {e}")
             return ""
-class Gemma3MultimodalProcessor:
-    """Handles multimodal generation using the Gemma 3 4B model via Ollama"""
+class MultimodalProcessor:
+    """Handles multimodal generation using the Gemini API"""
 
     _instance = None
 
@@ -237,24 +234,18 @@ class Gemma3MultimodalProcessor:
 
     def __init__(self):
         # Initialize Ollama client
-        self.ollama_client = ollama.Client()
-        self.model_name = "gemma3:latest"
+        self.model_name = os.getenv("MODEL_ID")
         logger.info(f"Using model: {self.model_name} via Ollama")
 
         # Cache for the most recent image
         self.last_image = None
         self.last_image_timestamp = 0
         self.lock = asyncio.Lock()
+        self.client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+
 
         # Counter
         self.generation_count = 0
-    def encode_image(self, image):
-        """Encode a PIL Image to a base64 string"""
-        buffered = io.BytesIO()
-        image = image.convert("RGB")  # Ensure RGB mode
-        image.save(buffered, format="JPEG")
-        encoded_image = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        return encoded_image
 
     async def set_image(self, image_data):
         """Cache the most recent image received"""
@@ -283,8 +274,6 @@ class Gemma3MultimodalProcessor:
                     logger.warning("No image available for multimodal generation")
                     return f"No image context: {text}"
 
-                # Encode the image
-                encoded_image = self.encode_image(self.last_image)
 
                 # Define the system prompt
                 system_prompt = (
@@ -296,28 +285,26 @@ class Gemma3MultimodalProcessor:
                 )
 
                 # Create the messages with system and user roles
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": text, "images": [encoded_image]}
-                ]
-
-                # Generate response using Ollama
-                chat_response = self.ollama_client.chat(
+                response = self.client.models.generate_content(
                     model=self.model_name,
-                    messages=messages,
-                    stream=False,
+                    contents=[text, self.last_image],
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        temperature=0.4,
+                        max_output_tokens=100
+                    )
                 )
 
                 # Extract the content from the ChatResponse object
-                response_content = chat_response.message.content
+                response_content = response.text
 
                 self.generation_count += 1
-                logger.info(f"Gemma 3 generation result ({len(response_content)} chars)")
+                logger.info(f"Model generation result ({len(response_content)} chars)")
 
                 return response_content
 
             except Exception as e:
-                logger.error(f"Gemma 3 generation error: {e}")
+                logger.error(f"Model generation error: {e}")
                 return f"Error processing: {text}"
             
 class KokoroTTSProcessor:
@@ -395,7 +382,7 @@ async def handle_client(websocket):
         # Initialize speech detection and get instance of processors
         detector = AudioSegmentDetector()
         transcriber = WhisperTranscriber.get_instance()
-        qwen_processor = Gemma3MultimodalProcessor.get_instance()
+        qwen_processor = MultimodalProcessor.get_instance()
         tts_processor = KokoroTTSProcessor.get_instance()
         
         # Add keepalive task
@@ -512,7 +499,7 @@ async def main():
     try:
         # Initialize all processors ahead of time to load models
         transcriber = WhisperTranscriber.get_instance()
-        qwen_processor = Gemma3MultimodalProcessor.get_instance()
+        qwen_processor = MultimodalProcessor.get_instance()
         tts_processor = KokoroTTSProcessor.get_instance()
         
         logger.info("Starting WebSocket server on 0.0.0.0:9073")
