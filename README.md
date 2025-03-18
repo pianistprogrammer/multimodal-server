@@ -1,6 +1,6 @@
 # Python WebSocket Server with Google Gemini API Integration
 
-This project implements a Python WebSocket server that integrates with Google's Gemini API. It allows clients to send requests and receive responses processed by the Gemini model.
+This project implements a Python WebSocket server that integrates with Google's Gemini API. It allows clients to send requests and receive responses processed by the Gemini model or Ollama vision model.
 
 ## Features
 
@@ -10,7 +10,7 @@ This project implements a Python WebSocket server that integrates with Google's 
 
 ## Prerequisites
 
-- Python 3.6 or higher
+- Python 3.11 or higher
 - Google Cloud account with access to the Gemini API
 
 ## Setup Instructions
@@ -18,8 +18,8 @@ This project implements a Python WebSocket server that integrates with Google's 
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/yourusername/your-repo-name.git
-   cd your-repo-name
+   git clone https://github.com/pianistprogrammer/multimodal-server.git
+   cd multimodal-server
    ```
 
 
@@ -53,7 +53,8 @@ This project implements a Python WebSocket server that integrates with Google's 
 5. **Run the WebSocket Server:**
 
    ```bash
-   python server.py
+   python cloud_main.py # for using the gemini api
+   python main.py # for using local ollama model
    ```
 
 
