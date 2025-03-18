@@ -71,7 +71,7 @@ The application uses the following environment variables:
 - **GOOGLE_API_KEY:** Your Google API key for authenticating requests to the Gemini API.
 - **MODEL_ID:** The identifier for the specific Gemini model to use (e.g., `gemini-2.0-flash`).
 
-These variables are loaded using the `python-dotenv` package, which reads the `.env` file and sets the variables accordingly. citeturn0search1
+These variables are loaded using the `python-dotenv` package, which reads the `.env` file and sets the variables accordingly.
 
 ## Dependencies
 
