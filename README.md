@@ -75,8 +75,8 @@ These variables are loaded using the `python-dotenv` package, which reads the `.
 
 ## Dependencies
 
-- `websockets`: For handling WebSocket connections. citeturn0search6
-- `python-dotenv`: For managing environment variables. citeturn0search1
+- `websockets`: For handling WebSocket connections. 
+- `python-dotenv`: For managing environment variables.
 - `google-genai`: For interacting with the Google Gemini API.
 
 These dependencies are listed in the `requirements.txt` file and can be installed using `pip`.
