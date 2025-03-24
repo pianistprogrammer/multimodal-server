@@ -237,7 +237,7 @@ class MultimodalProcessor:
     def __init__(self):
         # Initialize Ollama client
         self.model_name = os.getenv("MODEL_ID")
-        logger.info(f"Using model: {self.model_name} via Ollama")
+        logger.info(f"Using model: {self.model_name} via Gemini api")
 
         # Cache for the most recent image
         self.last_image = None
