@@ -235,7 +235,7 @@ class MultimodalProcessor:
         return cls._instance
 
     def __init__(self):
-        # Initialize Ollama client
+        # Initialize gemini client
         self.model_name = os.getenv("MODEL_ID")
         logger.info(f"Using model: {self.model_name} via Gemini api")
 
